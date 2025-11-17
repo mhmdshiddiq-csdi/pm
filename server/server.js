@@ -1,14 +1,14 @@
 import express from 'express';
 import cors from 'cors';
 import 'dotenv/config';
-import {ClerkMiddleware} from '@clerk/express'
-import { functions, inngest } from './inngest';
+import { clerkMiddleware } from '@clerk/express';
+import { functions, inngest } from './inngest/index.js';
 import { serve } from 'inngest/express';
 
 const app = express();
 app.use(express.json());
 app.use(cors());
-app.use(ClerkMiddleware());
+app.use(clerkMiddleware());
 
 app.get('/', (req, res) => { 
   res.send('server is live')
