@@ -48,8 +48,79 @@ const syncUserUpdation = inngest.createFunction(
   }
 )
 
+const syncWorkspaeCreation = inngest.createFunction(
+  { id: "sync-workspace-from-clerk" },
+  { event: "clerk/organization.created" },
+  async ({ event }) => { 
+    const { data } = event;
+    await prisma.workspace.create({
+      data: {
+        id: data.id,
+        name: data.name,
+        slug: data.slug,
+        image_url: data.image_url,
+        ownerId: data.created_by,
+      }
+    })
+
+    // Add creator as ADMIN member
+    await prisma.workspaceMember.create({
+      data: {
+        user: data.created_by,
+        workspace: data.id,
+        role: 'ADMIN',
+      }
+    })
+  }
+)
+
+const syncWorkspaceUpdation = inngest.createFunction(
+  { id: "update-workspace-from-clerk" },
+  { event: "clerk/organization.updated" },
+  async ({ event }) => {
+    const { data } = event;
+    await prisma.workspace.update({
+      where: {
+        id: data.id,
+      },
+      data: {
+        name: data.name,
+        slug: data.slug,
+        image_url: data.image_url,
+      }
+    })
+  }
+)
+
+// Inngest function exports to delete workspace from db
+const syncWorkspaceDeletion = inngest.createFunction(
+  { id: "delete-workspace-with-clerk" },
+  { event: "clerk/organization.deleted" },
+  async ({ event }) => {
+    const { data } = event;
+    await prisma.workspace.delete({
+      where: {
+        id: data.id,
+      }
+    })
+  }
+)
+
+const syncWorkspaceMemberCreation = inngest.createFunction(
+  { id: "sync-workspace-member-from-clerk" },
+  { event: "clerk/organizationInvitation.accepted" },
+  async ({ event }) => { 
+    const { data } = event;
+    await prisma.workspaceMember.create({
+      data: {
+        user: data.user_id,
+        workspaceId: data.organization_id,
+        role: String(data.role_name).toUpperCase(),
+      }
+    })
+  }
+)
 
 
 
-
-export const functions = [syncUserCreation, syncUserDeletion, syncUserUpdation];
+export const functions = [syncUserCreation, syncUserDeletion, syncUserUpdation, syncWorkspaeCreation, syncWorkspaceUpdation, syncWorkspaceDeletion, syncWorkspaceMemberCreation];
